@@ -193,6 +193,28 @@ const char *sinsp_evt::get_param_name(uint32_t id)
 	return m_info->params[id].name;
 }
 
+bool sinsp_evt::check_cache(uint32_t filtercheck_id, uint32_t field_id, std::pair<uint8_t *,uint32_t> *value)
+{
+	auto match = m_extract_cache.find(pair<uint32_t,uint32_t>(filtercheck_id, field_id));
+
+	if(match != m_extract_cache.end())
+	{
+		*value = match->second;
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+}
+
+void sinsp_evt::update_cache(uint32_t filtercheck_id, uint32_t field_id, uint8_t *val, uint32_t len)
+{
+	pair<uint32_t,uint32_t> key(filtercheck_id, field_id);
+	pair<uint8_t *,uint32_t> value(val, len);
+	m_extract_cache[key] = value;
+}
+
 const struct ppm_param_info* sinsp_evt::get_param_info(uint32_t id)
 {
 	if((m_flags & sinsp_evt::SINSP_EF_PARAMS_LOADED) == 0)
@@ -886,7 +908,7 @@ Json::Value sinsp_evt::get_param_as_json(uint32_t id, OUT const char** resolved_
 	case PT_SOCKADDR:
 		if(payload_len == 0)
 		{
-			ret = Json::Value::nullRef;
+			ret = Json::nullValue;
 			break;
 		}
 		else if(payload[0] == AF_UNIX)
@@ -896,8 +918,8 @@ Json::Value sinsp_evt::get_param_as_json(uint32_t id, OUT const char** resolved_
 			//
 			// Sanitize the file string.
 			//
-            string sanitized_str = payload + 1;
-	    sanitize_string(sanitized_str);
+			string sanitized_str = payload + 1;
+			sanitize_string(sanitized_str);
 
 			ret = sanitized_str;
 		}
@@ -935,7 +957,7 @@ Json::Value sinsp_evt::get_param_as_json(uint32_t id, OUT const char** resolved_
 	case PT_SOCKTUPLE:
 		if(payload_len == 0)
 		{
-			ret = Json::Value::nullRef;
+			ret = Json::nullValue;
 			break;
 		}
 

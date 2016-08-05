@@ -300,6 +300,16 @@ public:
 	*/
 	int32_t get_check_id();
 
+	/*!
+	  \brief check extract cache.
+	*/
+	bool check_cache(uint32_t filtercheck_id, uint32_t field_id, std::pair<uint8_t *,uint32_t> *value);
+
+	/*!
+	  \brief update extract cache.
+	*/
+	void update_cache(uint32_t filtercheck_id, uint32_t field_id, uint8_t *val, uint32_t len);
+
 #ifdef HAS_FILTERING
 	/*!
 	  \brief Return true if the event has been rejected by the filtering system.
@@ -328,6 +338,7 @@ private:
 		m_fdinfo = NULL;
 		m_iosize = 0;
 		m_poriginal_evt = NULL;
+		m_extract_cache.clear();
 	}
 	inline void init(uint8_t* evdata, uint16_t cpuid)
 	{
@@ -340,6 +351,7 @@ private:
 		m_cpuid = cpuid;
 		m_evtnum = 0;
 		m_poriginal_evt = NULL;
+		m_extract_cache.clear();
 	}
 	inline void load_params()
 	{
@@ -396,6 +408,11 @@ VISIBILITY_PRIVATE
 	bool m_filtered_out;
 #endif
 	const struct ppm_event_info* m_event_info_table;
+
+	//
+	// Used to cache results of extract() across filterchecks.
+	//
+	std::map<std::pair<uint32_t,uint32_t>,std::pair<uint8_t *,uint32_t>> m_extract_cache;
 
 	friend class sinsp;
 	friend class sinsp_parser;
